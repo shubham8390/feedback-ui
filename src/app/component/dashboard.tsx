@@ -11,10 +11,12 @@ interface Feedback {
     status: string;
 }
 
-
-
-// Move Modal component outside of Dashboard to prevent re-creation on every render
-const Modal = ({ isOpen, onClose, title, children }: { 
+const Modal = ({ 
+    isOpen, 
+    onClose, 
+    title, 
+    children 
+}: { 
     isOpen: boolean; 
     onClose: () => void; 
     title: string; 
@@ -23,14 +25,15 @@ const Modal = ({ isOpen, onClose, title, children }: {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div className="mt-3">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center p-4">
+            <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md mx-auto mt-10 sm:mt-20">
+                <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-medium text-gray-900">{title}</h3>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600"
+                            className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                            aria-label="Close modal"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -61,11 +64,9 @@ export default function Dashboard() {
         status: "pending"
     });
 
-    // const API_BASE_URL = "http://localhost:3000";
     const API_BASE_URL = "https://feedback-api-3-xt6r.onrender.com";
     const API_KEY = "123456feedback";
 
-    // Fetch all feedback
     const fetchFeedbacks = async () => {
         try {
             setLoading(true);
@@ -75,24 +76,18 @@ export default function Dashboard() {
                 }
             });
             
-            // if (!response.ok) {
-            //     throw new Error('Failed to fetch feedbacks');
-            // }
-            
             const result = await response.json();
             if (result) {
                 setData(result);
             }
         } catch (error) {
             console.error('Error fetching feedbacks:', error);
-            // Fallback to empty array
             setData([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // Create new feedback
     const createFeedback = async (feedbackData: Omit<Feedback, 'id'>) => {
         try {
             const response = await fetch(`${API_BASE_URL}/feedbacks/add`, {
@@ -108,14 +103,9 @@ export default function Dashboard() {
                 })
             });
             
-            // if (!response.ok) {
-            //     throw new Error('Failed to create feedback');
-            // }
-            
             const result = await response.json();
             if (result) {
-                // Refresh the feedback list
-                 toast.success('Feedback Submitted..')
+                toast.success('Feedback Submitted..');
                 await fetchFeedbacks();
                 return true;
             }
@@ -126,7 +116,6 @@ export default function Dashboard() {
         }
     };
 
-    // Update feedback status
     const updateFeedbackStatus = async (id: number, status: string) => {
         try {
             const response = await fetch(`${API_BASE_URL}/feedbacks/${id}/status`, {
@@ -138,14 +127,9 @@ export default function Dashboard() {
                 body: JSON.stringify({ status })
             });
             
-            // if (!response.ok) {
-            //     throw new Error('Failed to update feedback status');
-            // }
-            
             const result = await response.json();
             if (result) {
-                // Refresh the feedback list
-                  toast.success('Feedback Updated Successfully..')
+                toast.success('Feedback Updated Successfully..');
                 await fetchFeedbacks();
                 return true;
             }
@@ -156,7 +140,6 @@ export default function Dashboard() {
         }
     };
 
-    // Get AI summary for feedback
     const getFeedbackSummary = async (message: string) => {
         try {
             const response = await fetch(`${API_BASE_URL}/feedbacks/summary`, {
@@ -167,10 +150,6 @@ export default function Dashboard() {
                 },
                 body: JSON.stringify({ feedback: message })
             });
-            
-            // if (!response.ok) {
-            //     throw new Error('Failed to get feedback summary');
-            // }
             
             const result = await response.json();
             if (result) {
@@ -183,17 +162,14 @@ export default function Dashboard() {
         }
     };
 
-    // Load feedbacks on component mount
     useEffect(() => {
         fetchFeedbacks();
     }, []);
 
-    // Filter data based on status
     const filteredData = statusFilter === "all" 
         ? data 
         : data.filter(item => item.status === statusFilter);
 
-    // Get status badge color
     const getStatusColor = (status: string) => {
         switch (status) {
             case "pending":
@@ -207,7 +183,6 @@ export default function Dashboard() {
         }
     };
 
-    // Handle form input changes
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -216,7 +191,6 @@ export default function Dashboard() {
         }));
     };
 
-    // Create new feedback
     const handleCreateFeedback = async () => {
         const success = await createFeedback({
             name: formData.name,
@@ -229,11 +203,10 @@ export default function Dashboard() {
             setFormData({ name: "", email: "", message: "", status: "pending" });
             setShowCreateModal(false);
         } else {
-            alert("Failed to create feedback. Please try again.");
+            toast.error("Failed to create feedback. Please try again.");
         }
     };
 
-    // Open edit modal
     const handleEdit = (feedback: Feedback) => {
         setEditingFeedback(feedback);
         setFormData({
@@ -245,17 +218,14 @@ export default function Dashboard() {
         setShowEditModal(true);
     };
 
-    // Open summary modal
     const handleShowSummary = async (feedback: Feedback) => {
         setSelectedFeedback(feedback);
         setShowSummaryModal(true);
         
-        // Get AI summary
         const summary = await getFeedbackSummary(feedback.message);
         setAiSummary(summary);
     };
 
-    // Update feedback
     const handleUpdateFeedback = async () => {
         if (!editingFeedback) return;
         
@@ -266,7 +236,7 @@ export default function Dashboard() {
             setEditingFeedback(null);
             setFormData({ name: "", email: "", message: "", status: "pending" });
         } else {
-            alert("Failed to update feedback. Please try again.");
+            toast.error("Failed to update feedback. Please try again.");
         }
     };
 
@@ -282,108 +252,112 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
             <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                         Feedback Viewer Dashboard
                     </h1>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                         >
                             Add Feedback
                         </button>
-                        <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-                            Filter by Status:
-                        </label>
-                        <select
-                            id="status-filter"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="block w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="archived">Archived</option>
-                        </select>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <label htmlFor="status-filter" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                                Filter by Status:
+                            </label>
+                            <select
+                                id="status-filter"
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
                         <h2 className="text-lg font-medium text-gray-900">
                             Feedback List ({filteredData.length} items)
                         </h2>
                     </div>
                     
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        ID
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Name
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Email
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Message
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredData.map((feedback) => (
-                                    <tr key={feedback.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {feedback.id}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {feedback.name}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {feedback.email}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                                            {feedback.message}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(feedback.status)}`}>
-                                                {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-8">
-                                            <button
-                                                onClick={() => handleEdit(feedback)}
-                                                className="text-indigo-600 hover:text-indigo-900"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleShowSummary(feedback)}
-                                                className="inline-flex items-center px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-md text-sm font-medium transition-colors duration-200"
-                                            >
-                                                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                                </svg>
-                                                AI Summary
-                                            </button>
-                                        </td>
+                        <div className="inline-block min-w-full align-middle">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            ID
+                                        </th>
+                                        <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Name
+                                        </th>
+                                        <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                                            Email
+                                        </th>
+                                        <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                                            Message
+                                        </th>
+                                        <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {filteredData.map((feedback) => (
+                                        <tr key={feedback.id} className="hover:bg-gray-50">
+                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {feedback.id}
+                                            </td>
+                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {feedback.name}
+                                            </td>
+                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                                {feedback.email}
+                                            </td>
+                                            <td className="px-4 sm:px-6 py-4 text-sm text-gray-900 max-w-xs truncate hidden md:table-cell">
+                                                {feedback.message}
+                                            </td>
+                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(feedback.status)}`}>
+                                                    {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 sm:space-x-4">
+                                                <button
+                                                    onClick={() => handleEdit(feedback)}
+                                                    className="text-indigo-600 hover:text-indigo-900"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => handleShowSummary(feedback)}
+                                                    className="inline-flex items-center px-2 sm:px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded-md text-xs sm:text-sm font-medium transition-colors"
+                                                >
+                                                    <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                                    </svg>
+                                                    <span className="hidden sm:inline">AI</span> Summary
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     
                     {filteredData.length === 0 && (
@@ -408,7 +382,7 @@ export default function Dashboard() {
                             name="name"
                             value={formData.name}
                             onChange={handleInputChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                             required
                         />
                     </div>
@@ -419,7 +393,7 @@ export default function Dashboard() {
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                             required
                         />
                     </div>
@@ -430,7 +404,7 @@ export default function Dashboard() {
                             value={formData.message}
                             onChange={handleInputChange}
                             rows={3}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                             required
                         />
                     </div>
@@ -440,7 +414,7 @@ export default function Dashboard() {
                             name="status"
                             value={formData.status}
                             onChange={handleInputChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         >
                             <option value="pending">Pending</option>
                             <option value="resolved">Resolved</option>
@@ -450,13 +424,13 @@ export default function Dashboard() {
                     <div className="flex justify-end space-x-3 pt-4">
                         <button
                             onClick={() => setShowCreateModal(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleCreateFeedback}
-                            className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700"
+                            className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
                         >
                             Create
                         </button>
@@ -478,7 +452,7 @@ export default function Dashboard() {
                             name="name"
                             value={formData.name}
                             onChange={handleInputChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-gray-100"
                             required
                             disabled
                         />
@@ -490,7 +464,7 @@ export default function Dashboard() {
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-gray-100"
                             required
                             disabled
                         />
@@ -502,7 +476,7 @@ export default function Dashboard() {
                             value={formData.message}
                             onChange={handleInputChange}
                             rows={3}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-gray-100"
                             required
                             disabled
                         />
@@ -513,7 +487,7 @@ export default function Dashboard() {
                             name="status"
                             value={formData.status}
                             onChange={handleInputChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         >
                             <option value="pending">Pending</option>
                             <option value="resolved">Resolved</option>
@@ -523,13 +497,13 @@ export default function Dashboard() {
                     <div className="flex justify-end space-x-3 pt-4">
                         <button
                             onClick={() => setShowEditModal(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleUpdateFeedback}
-                            className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700"
+                            className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
                         >
                             Update
                         </button>
@@ -562,7 +536,7 @@ export default function Dashboard() {
                         <div className="flex justify-end pt-4">
                             <button
                                 onClick={() => setShowSummaryModal(false)}
-                                className="px-4 py-2 bg-gray-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-gray-700"
+                                className="px-4 py-2 bg-gray-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-gray-700 transition-colors"
                             >
                                 Close
                             </button>
