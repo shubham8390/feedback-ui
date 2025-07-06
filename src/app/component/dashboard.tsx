@@ -99,7 +99,8 @@ export default function Dashboard() {
                 body: JSON.stringify({
                     name: feedbackData.name,
                     email: feedbackData.email,
-                    message: feedbackData.message
+                    message: feedbackData.message,
+                    status: feedbackData.status 
                 })
             });
             
